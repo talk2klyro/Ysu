@@ -10,27 +10,36 @@
 </head>
 <body>
 
-  <header>
-    <h1>Circle ⭕ SaaS – Frontend Demo</h1>
-  </header>
+<header>
+  <h1>Circle ⭕ SaaS – Frontend Demo</h1>
+</header>
 
-  <!-- Roadmap Section -->
-  <section id="roadmap">
-    <h2>Visual Roadmap</h2>
-    <div class="roadmap-container"></div>
-  </section>
+<!-- Roadmap Section -->
+<section id="roadmap">
+  <h2>Visual Roadmap</h2>
+  <div class="roadmap-container"></div>
+</section>
 
-  <!-- Flowchart Section -->
-  <section id="flowchart">
-    <h2>Interactive Flowchart</h2>
+<!-- Flowchart Section -->
+<section id="flowchart">
+  <h2>Interactive Flowchart</h2>
+  <div class="flowchart-wrapper" style="position:relative;">
+    <svg class="connections-svg" width="100%" height="500" style="position:absolute; top:0; left:0; pointer-events:none;">
+      <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="#3498db"/>
+        </marker>
+      </defs>
+    </svg>
     <div class="flowchart-container"></div>
-  </section>
+  </div>
+</section>
 
-  <!-- Features Table Section -->
-  <section id="features">
-    <h2>Feature Table</h2>
-    <div class="table-container"></div>
-  </section>
+<!-- Features Table Section -->
+<section id="features">
+  <h2>Feature Table</h2>
+  <div class="table-container"></div>
+</section>
 
 <script src="script.js"></script>
 </body>
