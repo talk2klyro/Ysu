@@ -7,7 +7,6 @@ const roadmapData = [
 ];
 
 const roadmapContainer = document.querySelector('.roadmap-container');
-
 roadmapData.forEach((item,index)=>{
   const phaseEl = document.createElement('div'); phaseEl.className='phase';
   const circle = document.createElement('div'); circle.className='phase-circle'; circle.textContent=index+1;
@@ -16,7 +15,6 @@ roadmapData.forEach((item,index)=>{
   circle.addEventListener('click',()=>{ card.classList.toggle('expanded'); });
   phaseEl.appendChild(circle); phaseEl.appendChild(card); roadmapContainer.appendChild(phaseEl);
 
-  // GSAP Animations
   gsap.from(circle,{ scrollTrigger:{ trigger: circle, start:"top 80%" }, y:-50, opacity:0, duration:0.8, ease:"bounce.out" });
   gsap.from(card,{ scrollTrigger:{ trigger: card, start:"top 80%" }, x:-50, opacity:0, duration:0.8, delay:0.2, ease:"power2.out" });
 });
@@ -33,12 +31,44 @@ const flowchartData = [
 ];
 
 const flowchartContainer = document.querySelector('.flowchart-container');
-
 flowchartData.forEach(node=>{
   const nodeEl=document.createElement('div'); nodeEl.className='node';
   nodeEl.innerHTML=`<strong>${node.name}</strong><div class="node-tooltip"><ul>${node.features.map(f=>`<li>${f}</li>`).join('')}</ul></div>`;
   nodeEl.addEventListener('click',()=>{ nodeEl.classList.toggle('show-tooltip'); });
   flowchartContainer.appendChild(nodeEl);
+});
+
+// -------------------- FLOWCHART CONNECTIONS --------------------
+const svg = document.querySelector('.connections-svg');
+const nodeEls = document.querySelectorAll('.node');
+const connections = [
+  [0,1],[0,2],[0,3],[1,5],[1,6],[2,5]
+];
+
+function drawLine(fromEl, toEl) {
+  const svgRect = svg.getBoundingClientRect();
+  const fRect = fromEl.getBoundingClientRect();
+  const tRect = toEl.getBoundingClientRect();
+  const x1 = fRect.left + fRect.width/2 - svgRect.left;
+  const y1 = fRect.top + fRect.height/2 - svgRect.top;
+  const x2 = tRect.left + tRect.width/2 - svgRect.left;
+  const y2 = tRect.top + tRect.height/2 - svgRect.top;
+  const line = document.createElementNS("http://www.w3.org/2000/svg","line");
+  line.setAttribute("x1", x1); line.setAttribute("y1", y1);
+  line.setAttribute("x2", x1); line.setAttribute("y2", y1);
+  line.setAttribute("stroke","#3498db"); line.setAttribute("stroke-width","3");
+  line.setAttribute("stroke-linecap","round"); line.setAttribute("marker-end","url(#arrowhead)");
+  svg.appendChild(line);
+  gsap.to(line,{ x2:x2, y2:y2, duration:1, ease:"power2.out" });
+}
+
+setTimeout(()=>{
+  connections.forEach(([from,to])=> drawLine(nodeEls[from], nodeEls[to]));
+},100);
+
+window.addEventListener('resize', ()=>{
+  svg.innerHTML = `<defs><marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="#3498db"/></marker></defs>`;
+  connections.forEach(([from,to])=> drawLine(nodeEls[from], nodeEls[to]));
 });
 
 // -------------------- FEATURE TABLE --------------------
