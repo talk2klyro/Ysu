@@ -1,0 +1,41 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: #f5f6fa;
+  color: #333;
+}
+
+header {
+  text-align: center;
+  padding: 40px 20px;
+  background: #3498db;
+  color: #fff;
+}
+
+h1, h2 { margin: 0 0 20px; }
+
+section {
+  padding: 40px 20px;
+}
+
+/* Roadmap */
+.roadmap-container { display: flex; flex-direction: column; gap: 40px; max-width: 700px; margin: auto; position: relative; }
+.phase { display: flex; gap: 20px; align-items: flex-start; }
+.phase-circle { width: 40px; height: 40px; background: #3498db; border-radius: 50%; color: #fff; display: flex; justify-content: center; align-items: center; font-weight: bold; cursor: pointer; transition: transform 0.3s; }
+.phase-circle:hover { transform: scale(1.2); background: #2980b9; }
+.phase-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); flex: 1; max-height: 0; overflow: hidden; transition: max-height 0.5s ease-in-out; }
+.phase-card.expanded { max-height: 500px; }
+
+/* Flowchart */
+.flowchart-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 60px; justify-items: center; position: relative; }
+.node { width: 180px; padding: 15px; background: #3498db; color: #fff; text-align: center; border-radius: 12px; cursor: pointer; transition: transform 0.3s, background 0.3s; position: relative; }
+.node:hover { transform: scale(1.1); background: #2980b9; }
+.node-tooltip { display: none; position: absolute; top: 110%; left: 50%; transform: translateX(-50%); background: #fff; color: #333; padding: 10px; border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.15); width: 220px; text-align: left; font-size: 0.9rem; z-index: 10; }
+.node.show-tooltip .node-tooltip { display: block; }
+
+/* Table */
+.table-container { max-width: 900px; margin: auto; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 12px 15px; border: 1px solid #ddd; text-align: left; }
+th { background: #3498db; color: #fff; }
+tr:nth-child(even) { background: #f9f9f9; }
