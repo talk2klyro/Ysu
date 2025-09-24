@@ -3,227 +3,126 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Magical Balloon Sign-Up</title>
+<title>Shared Sky Prototype</title>
 <style>
-  body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: linear-gradient(to top, #87ceeb, #ffffff);
-    overflow-x: hidden;
-  }
+body {
+  margin:0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(to top,#87ceeb,#ffffff);
+  overflow-x:hidden;
+}
+#signup {
+  position:absolute; top:50px; width:100%; text-align:center; z-index:10;
+}
+input[type="text"] { padding:10px; font-size:16px; }
+label { display:block; margin:10px 0; font-size:14px; }
+button { padding:10px 20px; font-size:16px; cursor:pointer; }
 
-  #signup {
-    position: absolute;
-    top: 50px;
-    width: 100%;
-    text-align: center;
-    z-index: 10;
-  }
+.sky-object {
+  position:absolute; display:flex; justify-content:center; align-items:center;
+  font-weight:bold; color:white; cursor:pointer; animation:swing 2s infinite alternate;
+  border-radius:50%;
+}
 
-  input[type="text"] {
-    padding: 10px;
-    font-size: 16px;
-  }
+.balloon { width:120px; height:160px; font-size:18px; border-radius:50% 50% 50% 50% / 55% 55% 45% 45%; }
+.star { width:100px; height:100px; font-size:16px; clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%); color:black; }
+.kite { width:80px; height:80px; font-size:14px; clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%); }
 
-  label {
-    display: block;
-    margin: 10px 0;
-    font-size: 14px;
-  }
+@keyframes swing {0%{transform:rotate(-10deg);}50%{transform:rotate(10deg);}100%{transform:rotate(-10deg);}}
+@keyframes floatUp {0%{transform:translateY(0);opacity:1;}100%{transform:translateY(-500px);opacity:0;}}
 
-  button {
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
-  }
+#snackbar {visibility:hidden;min-width:250px;background-color:#333;color:#fff;text-align:center;
+border-radius:4px;padding:16px;position:fixed;z-index:20;left:50%;bottom:30px;transform:translateX(-50%);
+font-size:16px;}
+#snackbar.show {visibility:visible;animation:fadein 0.5s,fadeout 0.5s 2.5s;}
+@keyframes fadein {from{bottom:0;opacity:0;}to{bottom:30px;opacity:1;}}
+@keyframes fadeout {from{bottom:30px;opacity:1;}to{bottom:0;opacity:0;}}
 
-  .balloon {
-    position: absolute;
-    width: 150px;
-    height: 200px;
-    border-radius: 50% 50% 50% 50% / 55% 55% 45% 45%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    font-weight: bold;
-    font-size: 20px;
-    cursor: pointer;
-    animation: swing 2s infinite alternate;
-  }
-
-  .string {
-    position: absolute;
-    width: 2px;
-    height: 100px;
-    background: #333;
-  }
-
-  @keyframes swing {
-    0% { transform: rotate(-15deg); }
-    50% { transform: rotate(15deg); }
-    100% { transform: rotate(-15deg); }
-  }
-
-  @keyframes floatUp {
-    0% { transform: translateY(0); opacity: 1; }
-    100% { transform: translateY(-600px); opacity: 0; }
-  }
-
-  /* Clouds */
-  .cloud {
-    position: absolute;
-    background: white;
-    border-radius: 50%;
-    opacity: 0.8;
-    z-index: 1;
-  }
-
-  /* Snackbar */
-  #snackbar {
-    visibility: hidden;
-    min-width: 250px;
-    background-color: #333;
-    color: #fff;
-    text-align: center;
-    border-radius: 4px;
-    padding: 16px;
-    position: fixed;
-    z-index: 20;
-    left: 50%;
-    bottom: 30px;
-    transform: translateX(-50%);
-    font-size: 16px;
-  }
-
-  #snackbar.show {
-    visibility: visible;
-    animation: fadein 0.5s, fadeout 0.5s 2.5s;
-  }
-
-  @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
-  @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
-
+.cloud {position:absolute;background:white;border-radius:50%;opacity:0.8;z-index:1;}
 </style>
 </head>
 <body>
 
 <div id="signup">
-  <h2>Sign Up</h2>
+  <h2>Join the Shared Sky</h2>
   <input type="text" id="name" placeholder="Enter your name"><br>
-  <label>
-    <input type="checkbox" id="consent">
-    I agree to receive marketing updates
-  </label>
-  <button onclick="submitForm()">Sign Up</button>
+  <label><input type="checkbox" id="consent"> I agree to receive updates</label>
+  <button onclick="submitForm()">Join Sky</button>
 </div>
 
 <div id="snackbar"></div>
 
 <script>
-const colors = ["#ff6b6b", "#ff4757", "#ffa502", "#1e90ff", "#2ed573"];
-const clouds = [];
+const colors=["#ff6b6b","#ff4757","#ffa502","#1e90ff","#2ed573"];
+const clouds=[];
 
-function createCloud(x, y, size) {
-  const cloud = document.createElement("div");
-  cloud.className = "cloud";
-  cloud.style.width = `${size}px`;
-  cloud.style.height = `${size/2}px`;
-  cloud.style.left = `${x}px`;
-  cloud.style.top = `${y}px`;
-  document.body.appendChild(cloud);
-  clouds.push({el: cloud, x, speed: 0.2 + Math.random() * 0.3});
+// Clouds
+for(let i=0;i<5;i++){createCloud(Math.random()*window.innerWidth,Math.random()*150,100+Math.random()*100);}
+function createCloud(x,y,size){
+  const cloud=document.createElement("div");
+  cloud.className="cloud"; cloud.style.width=size+"px"; cloud.style.height=(size/2)+"px";
+  cloud.style.left=x+"px"; cloud.style.top=y+"px"; document.body.appendChild(cloud);
+  clouds.push({el:cloud,x,speed:0.2+Math.random()*0.3});
 }
-
-for(let i=0;i<5;i++){
-  createCloud(Math.random()*window.innerWidth, Math.random()*150, 100 + Math.random()*100);
-}
-
-function moveClouds() {
-  clouds.forEach(cloud => {
-    cloud.x += cloud.speed;
-    if(cloud.x > window.innerWidth) cloud.x = -200;
-    cloud.el.style.left = cloud.x + "px";
-  });
-  requestAnimationFrame(moveClouds);
-}
+function moveClouds(){clouds.forEach(c=>{c.x+=c.speed;if(c.x>window.innerWidth)c.x=-200;c.el.style.left=c.x+"px";});
+requestAnimationFrame(moveClouds);}
 moveClouds();
 
-function showSnackbar(message) {
-  const snackbar = document.getElementById("snackbar");
-  snackbar.textContent = message;
-  snackbar.className = "show";
-  setTimeout(() => { snackbar.className = snackbar.className.replace("show", ""); }, 3000);
+// Snackbar
+function showSnackbar(msg){const s=document.getElementById("snackbar");s.textContent=msg;s.className="show";
+setTimeout(()=>{s.className=s.className.replace("show","");},3000);}
+
+// Shared Sky Array
+let sky=[];
+
+// Add object to sky
+function joinSky(name,type="balloon"){
+  const color=colors[Math.floor(Math.random()*colors.length)];
+  const left=Math.random()*(window.innerWidth-150);
+  const top=500;
+  const obj={name,type,color,left,top};
+  sky.push(obj);
+  renderSkyObject(obj);
+  createConfetti(obj);
+  showSnackbar(`${name} joined the sky!`);
 }
 
-function submitForm() {
-  const name = document.getElementById('name').value.trim();
-  const consent = document.getElementById('consent').checked;
-
-  if(!name) {
-    alert("Please enter your name!");
-    return;
-  }
-
-  console.log("User Name:", name);
-  console.log("Consent given:", consent);
-
-  showSnackbar(`Welcome, ${name}!`);
-
-  // Create balloon
-  const balloon = document.createElement("div");
-  balloon.className = "balloon";
-  balloon.style.background = colors[Math.floor(Math.random()*colors.length)];
-  balloon.style.left = Math.random()*(window.innerWidth-150) + "px";
-  balloon.style.top = "500px";
-  balloon.textContent = name;
-
-  const string = document.createElement("div");
-  string.className = "string";
-  string.style.left = balloon.style.left;
-  string.style.top = parseInt(balloon.style.top)+200 + "px";
-
-  document.body.appendChild(balloon);
-  document.body.appendChild(string);
-
-  // Animate floating up with confetti
-  setTimeout(() => {
-    balloon.style.animation = "floatUp 5s linear forwards";
-    string.style.animation = "floatUp 5s linear forwards";
-    createConfetti(balloon);
-  }, 100);
-
-  // Hide form
-  document.getElementById('signup').style.display = 'none';
+// Render objects
+function renderSkyObject(obj){
+  const div=document.createElement("div");
+  div.className="sky-object "+obj.type; div.style.left=obj.left+"px"; div.style.top=obj.top+"px";
+  div.style.background=obj.color; div.textContent=obj.name; document.body.appendChild(div);
+  setTimeout(()=>{div.style.animation="floatUp 6s linear forwards";},100);
 }
 
-// Simple confetti effect
-function createConfetti(balloon) {
-  for(let i=0;i<30;i++){
-    const confetti = document.createElement("div");
-    confetti.style.position = "absolute";
-    confetti.style.width = "8px";
-    confetti.style.height = "8px";
-    confetti.style.background = colors[Math.floor(Math.random()*colors.length)];
-    confetti.style.left = parseInt(balloon.style.left) + 70 + "px";
-    confetti.style.top = parseInt(balloon.style.top) + 50 + "px";
-    confetti.style.opacity = 1;
-    confetti.style.borderRadius = "50%";
-    document.body.appendChild(confetti);
-
-    const angle = Math.random()*2*Math.PI;
-    const distance = 50 + Math.random()*100;
-    const x = distance*Math.cos(angle);
-    const y = distance*Math.sin(angle);
-
-    confetti.animate([
-      { transform: `translate(0,0)`, opacity: 1 },
-      { transform: `translate(${x}px, ${y}px)`, opacity: 0 }
-    ], { duration: 2000 + Math.random()*1000, easing: "ease-out" });
-
-    setTimeout(() => confetti.remove(), 3000);
+// Confetti
+function createConfetti(obj){
+  for(let i=0;i<20;i++){
+    const c=document.createElement("div");
+    c.style.position="absolute"; c.style.width="6px"; c.style.height="6px"; c.style.background=colors[Math.floor(Math.random()*colors.length)];
+    c.style.left=parseInt(obj.left)+50+"px"; c.style.top=parseInt(obj.top)+50+"px"; c.style.borderRadius="50%";
+    document.body.appendChild(c);
+    const angle=Math.random()*2*Math.PI; const dist=50+Math.random()*50;
+    const x=dist*Math.cos(angle); const y=dist*Math.sin(angle);
+    c.animate([{transform:`translate(0,0)`,opacity:1},{transform:`translate(${x}px,${y}px)`,opacity:0}],{duration:2000+Math.random()*1000,easing:"ease-out"});
+    setTimeout(()=>c.remove(),3000);
   }
 }
+
+// Sign-Up form
+function submitForm(){
+  const name=document.getElementById('name').value.trim();
+  const consent=document.getElementById('consent').checked;
+  if(!name){alert("Enter your name!"); return;}
+  console.log("User:",name,"Consent:",consent);
+  joinSky(name); document.getElementById('signup').style.display='none';
+}
+
+// Simulate invited friends (for demo)
+setTimeout(()=>{joinSky("Alice","star");},1500);
+setTimeout(()=>{joinSky("Bob","kite");},3000);
+setTimeout(()=>{joinSky("Charlie","balloon");},4500);
+
 </script>
 </body>
 </html>
