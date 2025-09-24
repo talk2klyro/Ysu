@@ -1,206 +1,326 @@
-<!DOCTYPE html>
+<!--
+Shared Sky — Advanced standalone HTML5 + CSS3 + Vanilla JS prototype
+Includes:
+ - Neon-style neon/glow CSS + advanced gradients
+ - snackbars messages loaded from snackbars.json (with fallback)
+ - mocked server integration points (POST /api/join) — server snippet included below
+ - uses an .env-stored NEON_DATABASE_URL (server-side only) — DO NOT put secrets in frontend
+ - share/invite code simulation
+ - detailed usage notes at the bottom of this file
+
+Files to save alongside this HTML for full demo:
+ - snackbars.json  (sample provided at the bottom)
+ - (optional) server.js / serverless function (snippet included below) to persist joins to Neon Postgres
+
+Keep this file as: shared-sky-advanced.html
+Open in a browser for the frontend demo. To enable persistent Neon integration, deploy the server snippet to Vercel/Netlify/Render and set NEON_DATABASE_URL in the environment.
+-->
+
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Balloon Sky - Shared Sky Experience</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Shared Sky — Advanced Prototype</title>
 <style>
-/* ----------------- Base Styling ----------------- */
-body {
-  margin: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(to top,#87ceeb,#ffffff);
-  overflow-x: hidden;
+:root{
+  --bg-top:#031526;
+  --bg-bottom:#072341;
+  --neon-a: rgba(0,255,200,0.12);
+  --neon-b: rgba(255,0,200,0.06);
+  --accent:#7ef9ff;
+  --glass: rgba(255,255,255,0.06);
+  --muted: rgba(255,255,255,0.6);
 }
-
-/* ----------------- Signup ----------------- */
-#signup {
-  position: absolute;
-  top: 50px;
-  width: 100%;
-  text-align: center;
-  z-index: 10;
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial}
+body{
+  background: radial-gradient(1200px 600px at 10% 20%, rgba(255,255,255,0.03), transparent),
+              linear-gradient(180deg, var(--bg-top) 0%, #0b2a3f 45%, var(--bg-bottom) 100%);
+  color: #fff; overflow-x:hidden; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
 }
-input[type="text"] { padding: 12px; font-size: 16px; border-radius: 6px; border: 1px solid #ccc; }
-label { display: block; margin: 12px 0; font-size: 14px; }
-button { padding: 12px 24px; font-size: 16px; cursor: pointer; border-radius: 6px; border:none; background:#1e90ff; color:white; transition:0.2s; }
-button:hover { background:#0b6fcc; }
-
-/* ----------------- Sky Objects ----------------- */
-.sky-object {
-  position: absolute;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-weight: bold;
-  color: white;
-  cursor: pointer;
-  animation: swing 2s infinite alternate;
-  border-radius: 50%;
-  text-align: center;
-  user-select: none;
-}
-
-/* Objects */
-.balloon { width: 120px; height: 160px; font-size: 18px; border-radius:50% 50% 50% 50% / 55% 55% 45% 45%; }
-.star { width: 100px; height: 100px; font-size: 16px; clip-path: polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%); color:black; }
-.kite { width: 80px; height: 80px; font-size: 14px; clip-path: polygon(50% 0%,100% 50%,50% 100%,0% 50%); }
-
-/* Swing animation */
-@keyframes swing {0%{transform:rotate(-10deg);}50%{transform:rotate(10deg);}100%{transform:rotate(-10deg);}}
-@keyframes floatUp {0%{transform:translateY(0);opacity:1;}100%{transform:translateY(-500px);opacity:0;}}
-
-/* ----------------- Snackbar ----------------- */
-#snackbar {
-  visibility: hidden;
-  min-width: 280px;
-  background-color: #333;
-  color: #fff;
-  text-align: center;
-  border-radius: 6px;
-  padding: 16px;
-  position: fixed;
-  z-index: 20;
-  left: 50%;
-  bottom: 30px;
-  transform: translateX(-50%);
-  font-size: 16px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-}
-#snackbar.show {
-  visibility: visible;
-  animation: fadein 0.5s, fadeout 0.5s 2.5s;
-}
-@keyframes fadein { from {bottom:0; opacity:0;} to {bottom:30px; opacity:1;} }
-@keyframes fadeout { from {bottom:30px; opacity:1;} to {bottom:0; opacity:0;} }
-
-/* ----------------- Clouds ----------------- */
-.cloud {
-  position: absolute;
-  background: white;
-  border-radius: 50%;
-  opacity: 0.8;
-  z-index: 1;
-}
+.container{position:relative;min-height:100vh;padding:36px 20px;}
+.header{display:flex;gap:16px;align-items:center;justify-content:space-between;max-width:1100px;margin:0 auto}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#9b7bff);box-shadow:0 6px 30px rgba(123,31,255,0.14), inset 0 -6px 18px rgba(0,0,0,0.12);display:flex;align-items:center;justify-content:center;font-weight:700;color:#012;}
+.h1{font-size:18px;font-weight:700}
+.controls{display:flex;gap:8px;align-items:center}
+.card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:14px;padding:12px;backdrop-filter: blur(6px);box-shadow:0 6px 30px rgba(0,0,0,0.35);}
+.form-row{display:flex;gap:8px;align-items:center}
+input[type="text"], select{padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:var(--muted);min-width:200px}
+button{padding:10px 14px;border-radius:10px;border:0;background:linear-gradient(90deg,var(--accent),#9b7bff);color:#012;font-weight:700;cursor:pointer;box-shadow:0 8px 28px rgba(126,249,255,0.06)}
+.small{font-size:13px;color:var(--muted)}
+.sky{position:relative;margin:28px auto;max-width:1100px;height:68vh;border-radius:18px;overflow:hidden;border:1px solid rgba(255,255,255,0.03);}
+.sky-canvas{position:absolute;inset:0;}
+.cloud{position:absolute;background:rgba(255,255,255,0.06);border-radius:50%;filter:blur(4px);opacity:0.9}
+.sky-object{position:absolute;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;cursor:pointer;transform-origin:center bottom;transition:transform 160ms linear;box-shadow:0 10px 30px rgba(0,0,0,0.35)}
+.balloon{width:120px;height:160px;border-radius:50% 50% 50% 50% / 55% 55% 45% 45%;font-size:16px;padding:12px}
+.star{width:100px;height:100px;clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);font-size:14px;padding:8px;color:#0b0b0b}
+.kite{width:86px;height:86px;clip-path:polygon(50% 0%,100% 50%,50% 100%,0% 50%);font-size:14px;padding:10px}
+/* neon/glow variants managed via data attributes */
+.sky-object[data-neon="true"]{box-shadow:0 6px 30px rgba(126,249,255,0.08),0 0 18px 6px rgba(126,249,255,0.06);}
+.sky-object .label{pointer-events:none}
+.swing{animation:swing 2.4s ease-in-out infinite}
+@keyframes swing{0%{transform:translateY(0) rotate(-6deg)}50%{transform:translateY(-8px) rotate(6deg)}100%{transform:translateY(0) rotate(-6deg)}}
+.float-up{animation:floatUp 5.2s linear forwards}
+@keyframes floatUp{0%{transform:translateY(0) scale(1); opacity:1}100%{transform:translateY(-520px) scale(0.9); opacity:0}}
+.neon-border{box-shadow:0 0 18px rgba(126,249,255,0.15), inset 0 0 28px rgba(255,0,200,0.03);}
+.snackbar{position:fixed;left:50%;bottom:32px;transform:translateX(-50%);min-width:260px;padding:14px;border-radius:10px;font-weight:700;background:linear-gradient(180deg,rgba(3,9,23,0.9),rgba(3,9,23,0.85));box-shadow:0 10px 40px rgba(2,8,20,0.6);color:var(--accent);opacity:0;pointer-events:none;transition:all 360ms cubic-bezier(.2,.9,.2,1);z-index:999}
+.snackbar.show{opacity:1;pointer-events:auto;transform:translateX(-50%) translateY(-6px)}
+.invite-badge{padding:6px 8px;border-radius:10px;background:rgba(255,255,255,0.02);font-size:13px}
+.legend{display:flex;gap:8px;align-items:center}
+.footer{max-width:1100px;margin:18px auto;color:var(--muted);font-size:13px}
+.controls .muted{color:var(--muted)}
 </style>
 </head>
 <body>
+<div class="container">
+  <div class="header">
+    <div class="brand">
+      <div class="logo">SKY</div>
+      <div>
+        <div class="h1">Shared Sky — Advanced</div>
+        <div class="small">Joyful multi-user sky prototype · vanilla JS · neon visuals</div>
+      </div>
+    </div>
 
-<!-- ----------------- Signup Form ----------------- -->
-<div id="signup">
-  <h2>Join Your Sky</h2>
-  <input type="text" id="name" placeholder="Enter your name"><br>
-  <label><input type="checkbox" id="consent"> I agree to receive updates</label>
-  <button onclick="submitForm()">Join Sky</button>
-  <p id="inviteLink"></p>
+    <div class="controls">
+      <div class="card">
+        <div class="form-row">
+          <input id="name" type="text" placeholder="Your name (e.g. Ali)" />
+          <select id="type">
+            <option value="balloon">Balloon</option>
+            <option value="star">Star</option>
+            <option value="kite">Kite</option>
+          </select>
+          <button id="joinBtn">Join Sky</button>
+        </div>
+        <div style="margin-top:8px" class="small muted">Invite friends with a share code — simulate live joins.</div>
+      </div>
+      <div style="min-width:140px;text-align:right" class="card">
+        <div class="legend"><span class="invite-badge">Sky ID: <span id="skyId">demo-001</span></span></div>
+        <div style="margin-top:8px" class="small">Invite score: <span id="inviteScore">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sky" id="sky">
+    <canvas class="sky-canvas" id="starsCanvas"></canvas>
+    <!-- clouds & objects appended by JS -->
+  </div>
+
+  <div class="footer">Tip: Deploy the small server snippet (Node / serverless) and set <code>NEON_DATABASE_URL</code> in the environment to persist joins with Neon Postgres.</div>
 </div>
 
-<div id="snackbar"></div>
+<div id="snackbar" class="snackbar"></div>
 
 <script>
-// ----------------- Configuration -----------------
-const colors = ["#ff6b6b","#ff4757","#ffa502","#1e90ff","#2ed573"];
-const skyObjects = []; // Stores all objects in the current sky
-const clouds = [];
+/* ------------------ CONFIG ------------------- */
+const COLORS = ['#ff6b6b','#ff7a59','#ffa502','#ffd06b','#7ef9ff','#9b7bff','#7af59b'];
+const SKY_ID = (new URLSearchParams(location.search)).get('sky') || 'demo-001';
+const snackbarsURL = './snackbars.json'; // place snackbars.json next to this file
+let SNACK_MESSAGES = null; // will load
 
-// ----------------- Cloud Animation -----------------
-for(let i=0;i<7;i++){createCloud(Math.random()*window.innerWidth,Math.random()*150,100+Math.random()*120);}
-function createCloud(x,y,size){
-  const cloud = document.createElement("div");
-  cloud.className = "cloud";
-  cloud.style.width = size+"px"; cloud.style.height = (size/2)+"px";
-  cloud.style.left = x+"px"; cloud.style.top = y+"px";
-  document.body.appendChild(cloud);
-  clouds.push({el:cloud,x,speed:0.2+Math.random()*0.4});
+/* ------------------ UTIL ------------------- */
+function rand(a,b){return a + Math.random()*(b-a)}
+function pick(arr){return arr[Math.floor(Math.random()*arr.length)]}
+
+/* ------------------ SNACKBAR LOADER ------------------- */
+async function loadSnackbars(){
+  try{
+    const res = await fetch(snackbarsURL);
+    if(!res.ok) throw new Error('no json');
+    SNACK_MESSAGES = await res.json();
+    return;
+  }catch(e){
+    // fallback messages
+    SNACK_MESSAGES = {
+      join:["Welcome to the sky!","You just brightened the sky","Share your sky with a friend!","Invite to unlock neon trails"]
+    };
+    console.warn('Using fallback snackbars. Place snackbars.json to customize.');
+  }
 }
+
+/* ------------------ SKY RENDERING ------------------- */
+const skyEl = document.getElementById('sky');
+const inviteScoreEl = document.getElementById('inviteScore');
+const skyIdEl = document.getElementById('skyId');
+skyIdEl.textContent = SKY_ID;
+let inviteScore = 0;
+
+// simple cloud generator
+const clouds = [];
+function createCloud(x,y,w){
+  const el = document.createElement('div'); el.className='cloud';
+  el.style.width = w + 'px'; el.style.height = (w/2)+'px'; el.style.left = x + 'px'; el.style.top = y + 'px';
+  el.style.opacity = rand(0.05,0.14);
+  skyEl.appendChild(el);
+  clouds.push({el,x,w, speed: 0.15 + Math.random()*0.25});
+}
+for(let i=0;i<6;i++) createCloud(rand(0,1000), rand(10,140), rand(90,260));
 function moveClouds(){
-  clouds.forEach(c=>{
-    c.x += c.speed;
-    if(c.x > window.innerWidth) c.x = -200;
-    c.el.style.left = c.x+"px";
-  });
+  clouds.forEach(c=>{ c.x += c.speed; if(c.x > window.innerWidth + 200) c.x = -300; c.el.style.left = c.x + 'px'; });
   requestAnimationFrame(moveClouds);
 }
 moveClouds();
 
-// ----------------- Snackbar -----------------
-function showSnackbar(msg){
-  const s = document.getElementById("snackbar");
-  s.textContent = msg;
-  s.className = "show";
-  setTimeout(()=>{s.className = s.className.replace("show","");},3000);
-}
+// canvas starfield subtle
+const canvas = document.getElementById('starsCanvas');
+const ctx = canvas.getContext('2d');
+function resizeCanvas(){ canvas.width = skyEl.clientWidth; canvas.height = skyEl.clientHeight; }
+resizeCanvas(); window.addEventListener('resize', resizeCanvas);
+function drawStars(){ ctx.clearRect(0,0,canvas.width,canvas.height); for(let i=0;i<80;i++){ ctx.globalAlpha = Math.random()*0.7; ctx.fillStyle = 'rgba(255,255,255,'+ (0.08 + Math.random()*0.18) +')'; const x = Math.random()*canvas.width; const y = Math.random()*canvas.height; const r = Math.random()*1.8; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); } }
+setInterval(drawStars,2200);
 
-// ----------------- Sky ID & Invite -----------------
-let skyId = new URL(window.location.href).searchParams.get("sky") || Math.random().toString(36).substring(2,8);
-
-// ----------------- Sky Join -----------------
-function joinSky(name,type="balloon"){
-  const color = colors[Math.floor(Math.random()*colors.length)];
-  const left = Math.random()*(window.innerWidth-150);
-  const top = 500;
-  const obj = {name,type,color,left,top,skyId};
-  skyObjects.push(obj);
-  renderSkyObject(obj);
-  createConfetti(obj);
-  showSnackbar(`${name} joined your sky!`);
-  checkRewards();
-}
-
-// Render objects
+/* ------------------ OBJECTS ------------------- */
+let skyObjects = [];
 function renderSkyObject(obj){
-  const div = document.createElement("div");
-  div.className = "sky-object "+obj.type;
-  div.style.left = obj.left+"px"; div.style.top = obj.top+"px";
-  div.style.background = obj.color; div.textContent = obj.name;
-  document.body.appendChild(div);
-  setTimeout(()=>{div.style.animation="floatUp 6s linear forwards";},100);
+  const el = document.createElement('div');
+  el.className = 'sky-object ' + obj.type + ' swing';
+  el.setAttribute('data-neon', obj.neon? 'true':'false');
+  el.style.left = obj.left + 'px';
+  el.style.top = obj.top + 'px';
+  el.style.background = obj.background;
+  el.innerHTML = `<div class='label'>${obj.name}</div>`;
+  // rim glow for star to invert text color
+  if(obj.type === 'star') el.style.background = obj.background;
+
+  skyEl.appendChild(el);
+  // float up after short delay
+  setTimeout(()=>{
+    el.classList.add('float-up');
+    setTimeout(()=>el.remove(), 5600);
+  }, 120);
 }
 
-// Confetti Animation
-function createConfetti(obj){
-  for(let i=0;i<25;i++){
-    const c = document.createElement("div");
-    c.style.position="absolute"; c.style.width="6px"; c.style.height="6px";
-    c.style.background = colors[Math.floor(Math.random()*colors.length)];
-    c.style.left = parseInt(obj.left)+50+"px";
-    c.style.top = parseInt(obj.top)+50+"px";
-    c.style.borderRadius = "50%";
-    document.body.appendChild(c);
-    const angle = Math.random()*2*Math.PI; const dist = 50+Math.random()*50;
-    const x = dist*Math.cos(angle); const y = dist*Math.sin(angle);
-    c.animate([{transform:`translate(0,0)`,opacity:1},{transform:`translate(${x}px,${y}px)`,opacity:0}],{duration:2000+Math.random()*1000,easing:"ease-out"});
-    setTimeout(()=>c.remove(),3000);
+function createConfetti(x,y,amount=28){
+  for(let i=0;i<amount;i++){
+    const c = document.createElement('div');
+    c.style.position='absolute'; c.style.width='8px'; c.style.height='8px'; c.style.borderRadius='3px';
+    c.style.left = x + 'px'; c.style.top = y + 'px'; c.style.zIndex=9999;
+    const bg = pick(COLORS);
+    c.style.background = bg; c.style.opacity = 0.98;
+    skyEl.appendChild(c);
+    const angle = Math.random()*Math.PI*2; const dist = 40 + Math.random()*160;
+    const dx = Math.cos(angle)*dist; const dy = Math.sin(angle)*dist - 10;
+    c.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${dx}px,${dy}px)`,opacity:0}],{duration:1200+Math.random()*1600,easing:'cubic-bezier(.2,.9,.3,1)'});
+    setTimeout(()=>c.remove(),2600);
   }
 }
 
-// ----------------- Reward System -----------------
-function checkRewards(){
-  const count = skyObjects.length;
-  if(count === 3) showSnackbar("🎉 Sky Badge Unlocked! You brought 3 friends!");
-  if(count === 5) showSnackbar("🌈 Rainbow Trail Unlocked! Sky looks magical!");
-  if(count === 7) showSnackbar("🏅 Master Sky Builder! Invite more for surprises!");
+/* ------------------ SNACKBAR ------------------- */
+const snackEl = document.getElementById('snackbar');
+let snackTimeout = null;
+function showSnack(msg){
+  if(!msg) return;
+  snackEl.textContent = msg;
+  snackEl.classList.add('show');
+  clearTimeout(snackTimeout);
+  snackTimeout = setTimeout(()=> snackEl.classList.remove('show'), 3400);
 }
 
-// ----------------- Sign-Up Form -----------------
-function submitForm(){
-  const name = document.getElementById('name').value.trim();
-  const consent = document.getElementById('consent').checked;
-  if(!name){alert("Please enter your name!"); return;}
-  joinSky(name);
-  document.getElementById('signup').style.display = 'none';
+/* ------------------ JOIN / INVITE LOGIC ------------------- */
+async function joinSky(name,type,opts={persist:false}){
+  const color = pick(COLORS);
+  const left = Math.max(20, Math.floor(rand(30, Math.max(200, window.innerWidth - 180))));
+  const top = Math.floor(window.innerHeight * 0.62);
+  const obj = {name,type,background:color,left,top,neon:true,sky:SKY_ID};
+  skyObjects.push(obj);
+  renderSkyObject(obj);
+  createConfetti(left+40, top+30);
 
-  // Invite link
-  const inviteLink = `${window.location.origin}?sky=${skyId}`;
-  document.getElementById("inviteLink").innerHTML=`Share this link to invite friends: <a href="${inviteLink}" target="_blank">${inviteLink}</a>`;
-  showSnackbar("Invite friends and grow your sky!");
+  // snackbar message selection from JSON
+  const message = pick(SNACK_MESSAGES?.join || ["You joined the sky!"]);
+  showSnack(`${name} — ${message}`);
+
+  // increment invite score if the join was via an invite
+  if(opts.invitedBy) {
+    inviteScore += 1;
+    inviteScoreEl.textContent = inviteScore;
+    // big celebration for inviter
+    showSnack(`${opts.invitedBy} earned +1 invite!`);
+  }
+
+  // optional server-side persistence — uses a serverless endpoint
+  if(opts.persist){
+    try{
+      await fetch('/api/join', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({name,type,sky:SKY_ID})
+      });
+    }catch(e){ console.warn('Persist failed', e); }
+  }
 }
 
-// ----------------- Demo: Simulated Friends Joining -----------------
-setTimeout(()=>{joinSky("Alice","star");},2000);
-setTimeout(()=>{joinSky("Bob","kite");},4000);
-setTimeout(()=>{joinSky("Charlie","balloon");},6000);
+// Bind UI
+document.getElementById('joinBtn').addEventListener('click', async ()=>{
+  const name = (document.getElementById('name').value || '').trim();
+  const type = document.getElementById('type').value;
+  if(!name){ alert('Please enter your name'); return; }
+  // Simulate persisting to backend if user has server deployed
+  await joinSky(name,type,{persist:false});
+  document.getElementById('name').value = '';
+});
+
+// Simulated invite join flow
+setTimeout(()=>{ joinSky('Alice','star',{invitedBy:'You'}); },1500);
+setTimeout(()=>{ joinSky('Bob','kite',{invitedBy:'You'}); },3000);
+setTimeout(()=>{ joinSky('Charlie','balloon',{invitedBy:'You'}); },4600);
+
+// load snackbars and start
+loadSnackbars().then(()=>{ /* ready */ });
 
 </script>
+
+<!-- ------------------ SERVER SNIPPET (Node / Express) ------------------
+Save this as server.js or deploy as a serverless function. This code connects to Neon Postgres using
+NEON_DATABASE_URL from your environment. Use a connection pool in production.
+
+// server.js (Node + Express)
+const express = require('express');
+const bodyParser = require('body-parser');
+const { Pool } = require('pg');
+require('dotenv').config();
+const app = express(); app.use(bodyParser.json());
+
+const pool = new Pool({ connectionString: process.env.NEON_DATABASE_URL, ssl: { rejectUnauthorized: false } });
+
+// simple join endpoint
+app.post('/api/join', async (req, res) => {
+  const { name, type, sky } = req.body;
+  try{
+    const q = 'INSERT INTO joins (name, type, sky, created_at) VALUES ($1,$2,$3,now()) RETURNING id';
+    const r = await pool.query(q, [name,type,sky]);
+    res.json({ok:true, id: r.rows[0].id});
+  }catch(err){ console.error(err); res.status(500).json({ok:false,error:err.message}); }
+});
+
+const PORT = process.env.PORT || 3000; app.listen(PORT, ()=> console.log('server',PORT));
+
+-->
+
+<!-- ------------------ SAMPLE snackbars.json ------------------
+Save this next to the HTML as snackbars.json
+{
+  "join": [
+    "Welcome to the sky!",
+    "You just brightened the sky",
+    "Invite friends to unlock neon trails",
+    "Nice! Your object is floating high",
+    "Celebration! Confetti for your arrival"
+  ],
+  "invite": [
+    "You earned a friend-invite reward!",
+    "Invite streak! More neon colors unlocked",
+    "Your sky is getting crowded — in a good way"
+  ]
+}
+-->
+
+<!-- ------------------ SAMPLE .env ------------------
+NEON_DATABASE_URL=postgresql://username:password@ep-you-12345.us-east-2.aws.neon.tech:5432/database_name
+# On Neon, copy the connection string from the dashboard. Keep it secret.
+-->
+
 </body>
 </html>
