@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Magical Balloon Sign-Up</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(to top, #87ceeb, #ffffff);
+    overflow-x: hidden;
+  }
+
+  #signup {
+    position: absolute;
+    top: 50px;
+    width: 100%;
+    text-align: center;
+    z-index: 10;
+  }
+
+  input[type="text"] {
+    padding: 10px;
+    font-size: 16px;
+  }
+
+  label {
+    display: block;
+    margin: 10px 0;
+    font-size: 14px;
+  }
+
+  button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  .balloon {
+    position: absolute;
+    width: 150px;
+    height: 200px;
+    border-radius: 50% 50% 50% 50% / 55% 55% 45% 45%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-weight: bold;
+    font-size: 20px;
+    cursor: pointer;
+    animation: swing 2s infinite alternate;
+  }
+
+  .string {
+    position: absolute;
+    width: 2px;
+    height: 100px;
+    background: #333;
+  }
+
+  @keyframes swing {
+    0% { transform: rotate(-15deg); }
+    50% { transform: rotate(15deg); }
+    100% { transform: rotate(-15deg); }
+  }
+
+  @keyframes floatUp {
+    0% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(-600px); opacity: 0; }
+  }
+
+  /* Clouds */
+  .cloud {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    opacity: 0.8;
+    z-index: 1;
+  }
+
+  /* Snackbar */
+  #snackbar {
+    visibility: hidden;
+    min-width: 250px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 4px;
+    padding: 16px;
+    position: fixed;
+    z-index: 20;
+    left: 50%;
+    bottom: 30px;
+    transform: translateX(-50%);
+    font-size: 16px;
+  }
+
+  #snackbar.show {
+    visibility: visible;
+    animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  }
+
+  @keyframes fadein { from { bottom: 0; opacity: 0; } to { bottom: 30px; opacity: 1; } }
+  @keyframes fadeout { from { bottom: 30px; opacity: 1; } to { bottom: 0; opacity: 0; } }
+
+</style>
+</head>
+<body>
+
+<div id="signup">
+  <h2>Sign Up</h2>
+  <input type="text" id="name" placeholder="Enter your name"><br>
+  <label>
+    <input type="checkbox" id="consent">
+    I agree to receive marketing updates
+  </label>
+  <button onclick="submitForm()">Sign Up</button>
+</div>
+
+<div id="snackbar"></div>
+
+<script>
+const colors = ["#ff6b6b", "#ff4757", "#ffa502", "#1e90ff", "#2ed573"];
+const clouds = [];
+
+function createCloud(x, y, size) {
+  const cloud = document.createElement("div");
+  cloud.className = "cloud";
+  cloud.style.width = `${size}px`;
+  cloud.style.height = `${size/2}px`;
+  cloud.style.left = `${x}px`;
+  cloud.style.top = `${y}px`;
+  document.body.appendChild(cloud);
+  clouds.push({el: cloud, x, speed: 0.2 + Math.random() * 0.3});
+}
+
+for(let i=0;i<5;i++){
+  createCloud(Math.random()*window.innerWidth, Math.random()*150, 100 + Math.random()*100);
+}
+
+function moveClouds() {
+  clouds.forEach(cloud => {
+    cloud.x += cloud.speed;
+    if(cloud.x > window.innerWidth) cloud.x = -200;
+    cloud.el.style.left = cloud.x + "px";
+  });
+  requestAnimationFrame(moveClouds);
+}
+moveClouds();
+
+function showSnackbar(message) {
+  const snackbar = document.getElementById("snackbar");
+  snackbar.textContent = message;
+  snackbar.className = "show";
+  setTimeout(() => { snackbar.className = snackbar.className.replace("show", ""); }, 3000);
+}
+
+function submitForm() {
+  const name = document.getElementById('name').value.trim();
+  const consent = document.getElementById('consent').checked;
+
+  if(!name) {
+    alert("Please enter your name!");
+    return;
+  }
+
+  console.log("User Name:", name);
+  console.log("Consent given:", consent);
+
+  showSnackbar(`Welcome, ${name}!`);
+
+  // Create balloon
+  const balloon = document.createElement("div");
+  balloon.className = "balloon";
+  balloon.style.background = colors[Math.floor(Math.random()*colors.length)];
+  balloon.style.left = Math.random()*(window.innerWidth-150) + "px";
+  balloon.style.top = "500px";
+  balloon.textContent = name;
+
+  const string = document.createElement("div");
+  string.className = "string";
+  string.style.left = balloon.style.left;
+  string.style.top = parseInt(balloon.style.top)+200 + "px";
+
+  document.body.appendChild(balloon);
+  document.body.appendChild(string);
+
+  // Animate floating up with confetti
+  setTimeout(() => {
+    balloon.style.animation = "floatUp 5s linear forwards";
+    string.style.animation = "floatUp 5s linear forwards";
+    createConfetti(balloon);
+  }, 100);
+
+  // Hide form
+  document.getElementById('signup').style.display = 'none';
+}
+
+// Simple confetti effect
+function createConfetti(balloon) {
+  for(let i=0;i<30;i++){
+    const confetti = document.createElement("div");
+    confetti.style.position = "absolute";
+    confetti.style.width = "8px";
+    confetti.style.height = "8px";
+    confetti.style.background = colors[Math.floor(Math.random()*colors.length)];
+    confetti.style.left = parseInt(balloon.style.left) + 70 + "px";
+    confetti.style.top = parseInt(balloon.style.top) + 50 + "px";
+    confetti.style.opacity = 1;
+    confetti.style.borderRadius = "50%";
+    document.body.appendChild(confetti);
+
+    const angle = Math.random()*2*Math.PI;
+    const distance = 50 + Math.random()*100;
+    const x = distance*Math.cos(angle);
+    const y = distance*Math.sin(angle);
+
+    confetti.animate([
+      { transform: `translate(0,0)`, opacity: 1 },
+      { transform: `translate(${x}px, ${y}px)`, opacity: 0 }
+    ], { duration: 2000 + Math.random()*1000, easing: "ease-out" });
+
+    setTimeout(() => confetti.remove(), 3000);
+  }
+}
+</script>
+</body>
+</html>
